@@ -96,6 +96,30 @@ button {
   font: 11px var(--font-mono);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hub-link {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.hub-link:hover {
+  color: var(--accent);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
 .privacy {
   display: inline-flex;
   align-items: center;

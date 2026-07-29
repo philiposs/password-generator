@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
   Check,
   Copy,
+  Grid2X2,
   KeyRound,
   RefreshCw,
   ShieldCheck,
@@ -84,10 +85,15 @@ onMounted(async () => {
             <small>chleb.app</small>
           </span>
         </a>
-        <span class="privacy">
-          <span class="privacy-dot"></span>
-          Runs locally in your browser
-        </span>
+        <div class="header-actions">
+          <a class="hub-link" href="https://tools.chleb.app" title="All tools" aria-label="All tools">
+            <Grid2X2 :size="18" aria-hidden="true" />
+          </a>
+          <span class="privacy">
+            <span class="privacy-dot"></span>
+            Runs locally in your browser
+          </span>
+        </div>
       </div>
     </header>
 
