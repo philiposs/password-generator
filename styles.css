@@ -189,6 +189,41 @@ h1 {
   font: 500 12px var(--font-mono);
 }
 
+.mode-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 24px 24px 0;
+  padding: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.mode-picker button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mode-picker button.selected {
+  color: var(--accent);
+  background: var(--bg-surface);
+  border-color: var(--border);
+}
+
+.mode-picker button:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 20%);
+}
+
 .strip-line {
   width: 28px;
   height: 1px;
@@ -401,6 +436,54 @@ input[type="range"] {
   border: 0;
 }
 
+.passphrase-options {
+  min-width: 0;
+  padding: 24px;
+}
+
+.separator-option {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.separator-option > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.separator-option strong {
+  font-size: 13px;
+}
+
+.separator-option small {
+  color: var(--text-muted);
+  font: 10px var(--font-mono);
+}
+
+.separator-option select {
+  max-width: 150px;
+  min-height: 36px;
+  padding: 6px 8px;
+  background: #fffdf8;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.separator-option select:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 20%);
+}
+
+.passphrase-toggles {
+  padding: 0;
+}
+
 .character-options legend {
   width: 100%;
   padding: 0 0 10px;
@@ -529,11 +612,15 @@ input[type="range"] {
 .security-note {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 0;
   color: var(--accent-green);
-  white-space: nowrap;
   font: 11px var(--font-mono);
+}
+
+.security-note a {
+  color: var(--accent-2);
 }
 
 .status {
@@ -671,6 +758,10 @@ footer {
     padding: 22px 18px 20px;
   }
 
+  .mode-picker {
+    margin: 18px 18px 0;
+  }
+
   textarea {
     min-height: 110px;
     font-size: 15px;
@@ -698,6 +789,14 @@ footer {
 
   .character-options {
     padding: 20px 18px;
+  }
+
+  .passphrase-options {
+    padding: 0 18px 18px;
+  }
+
+  .passphrase-toggles {
+    padding: 0;
   }
 
   .ambiguous-option {

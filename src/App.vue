@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
+  BookOpen,
   Check,
   Copy,
   Grid2X2,
@@ -10,16 +11,23 @@ import {
 } from "@lucide/vue";
 import {
   calculateEntropy,
+  calculatePassphraseEntropy,
+  generatePassphrase,
   generatePassword,
   getStrength,
 } from "./password.js";
 
+const mode = ref("random");
 const length = ref(20);
 const lowercase = ref(true);
 const uppercase = ref(true);
 const numbers = ref(true);
 const symbols = ref(true);
 const excludeAmbiguous = ref(true);
+const wordCount = ref(6);
+const separator = ref("-");
+const capitalize = ref(false);
+const includeNumber = ref(false);
 const password = ref("");
 const statusMessage = ref("");
 const statusType = ref("");
@@ -34,12 +42,26 @@ const options = computed(() => ({
   excludeAmbiguous: excludeAmbiguous.value,
 }));
 
-const entropy = computed(() => calculateEntropy(options.value));
+const passphraseOptions = computed(() => ({
+  wordCount: wordCount.value,
+  separator: separator.value,
+  capitalize: capitalize.value,
+  includeNumber: includeNumber.value,
+}));
+
+const entropy = computed(() => {
+  if (!password.value) return 0;
+  return mode.value === "random"
+    ? calculateEntropy(options.value)
+    : calculatePassphraseEntropy(passphraseOptions.value);
+});
 const strength = computed(() => getStrength(entropy.value));
 
 const createPassword = () => {
   try {
-    password.value = generatePassword(options.value);
+    password.value = mode.value === "random"
+      ? generatePassword(options.value)
+      : generatePassphrase(passphraseOptions.value);
     statusMessage.value = "";
     statusType.value = "";
   } catch (error) {
@@ -67,7 +89,11 @@ const normalizeLength = () => {
   length.value = Math.min(128, Math.max(4, Number(length.value) || 4));
 };
 
-watch(options, createPassword, { deep: true });
+const normalizeWordCount = () => {
+  wordCount.value = Math.min(10, Math.max(6, Math.round(Number(wordCount.value) || 6)));
+};
+
+watch([mode, options, passphraseOptions], createPassword);
 onMounted(async () => {
   await nextTick();
   createPassword();
@@ -100,17 +126,38 @@ onMounted(async () => {
     <main class="shell main-content">
       <div class="intro">
         <p class="eyebrow">PASSWORD UTILITY</p>
-        <h1>Random password generator</h1>
-        <p>Create strong, unique passwords using secure randomness on your device.</p>
+        <h1>Password generator</h1>
+        <p>Create strong, unique passwords or memorable passphrases on your device.</p>
       </div>
 
       <section class="generator" aria-labelledby="generator-title">
-        <h2 id="generator-title" class="visually-hidden">Random password generator</h2>
+        <h2 id="generator-title" class="visually-hidden">Password generator</h2>
 
         <div class="generator-strip">
           <span>WEB CRYPTO</span>
           <span class="strip-line" aria-hidden="true"></span>
-          <span>RANDOM PASSWORD</span>
+          <span>{{ mode === "random" ? "RANDOM PASSWORD" : "MEMORABLE PASSPHRASE" }}</span>
+        </div>
+
+        <div class="mode-picker" role="group" aria-label="Password type">
+          <button
+            type="button"
+            :class="{ selected: mode === 'random' }"
+            :aria-pressed="mode === 'random'"
+            @click="mode = 'random'"
+          >
+            <KeyRound :size="17" aria-hidden="true" />
+            Random
+          </button>
+          <button
+            type="button"
+            :class="{ selected: mode === 'memorable' }"
+            :aria-pressed="mode === 'memorable'"
+            @click="mode = 'memorable'"
+          >
+            <BookOpen :size="17" aria-hidden="true" />
+            Memorable
+          </button>
         </div>
 
         <div class="password-result">
@@ -126,7 +173,7 @@ onMounted(async () => {
               readonly
               spellcheck="false"
               aria-describedby="strength-summary"
-              placeholder="Choose at least one character type..."
+              :placeholder="mode === 'random' ? 'Choose at least one character type...' : 'Your passphrase will appear here...'"
             ></textarea>
             <button
               class="icon-button copy-button"
@@ -145,17 +192,17 @@ onMounted(async () => {
               <span
                 v-for="segment in 4"
                 :key="segment"
-                :class="{ active: segment <= strength.level }"
+                :class="{ active: password && segment <= strength.level }"
               ></span>
             </div>
             <p>
-              <strong>{{ strength.label }}</strong>
-              <span>Estimated {{ entropy }} bits</span>
+              <strong>{{ password ? strength.label : "Unavailable" }}</strong>
+              <span v-if="password">Estimated {{ entropy }} bits</span>
             </p>
           </div>
         </div>
 
-        <div class="settings">
+        <div v-if="mode === 'random'" class="settings">
           <div class="length-control">
             <div class="setting-title">
               <div>
@@ -232,10 +279,82 @@ onMounted(async () => {
           </label>
         </div>
 
+        <div v-else class="settings memorable-settings">
+          <div class="length-control">
+            <div class="setting-title">
+              <div>
+                <h3>Number of words</h3>
+                <p>Six random words is the recommended minimum.</p>
+              </div>
+              <input
+                v-model.number="wordCount"
+                class="length-input"
+                type="number"
+                min="6"
+                max="10"
+                aria-label="Number of words"
+                @blur="normalizeWordCount"
+              />
+            </div>
+            <input
+              v-model.number="wordCount"
+              type="range"
+              min="6"
+              max="10"
+              step="1"
+              aria-label="Number of words"
+            />
+            <div class="range-labels" aria-hidden="true">
+              <span>6</span>
+              <span>10</span>
+            </div>
+          </div>
+
+          <div class="passphrase-options">
+            <label class="separator-option" for="separator">
+              <span>
+                <strong>Separator</strong>
+                <small>Choose how the words are joined.</small>
+              </span>
+              <select id="separator" v-model="separator">
+                <option value="-">Hyphen (-)</option>
+                <option value=".">Period (.)</option>
+                <option value="_">Underscore (_)</option>
+                <option value=" ">Space</option>
+              </select>
+            </label>
+            <fieldset class="character-options passphrase-toggles">
+              <legend class="visually-hidden">Passphrase options</legend>
+              <label>
+                <span>
+                  <strong>Capitalize words</strong>
+                  <small>Useful when a site requires uppercase letters.</small>
+                </span>
+                <input v-model="capitalize" type="checkbox" />
+                <span class="checkbox" aria-hidden="true"><Check :size="14" /></span>
+              </label>
+              <label>
+                <span>
+                  <strong>Add a number</strong>
+                  <small>Appends a random digit after the last word.</small>
+                </span>
+                <input v-model="includeNumber" type="checkbox" />
+                <span class="checkbox" aria-hidden="true"><Check :size="14" /></span>
+              </label>
+            </fieldset>
+          </div>
+        </div>
+
         <div class="toolbar">
           <p class="security-note">
             <ShieldCheck :size="17" aria-hidden="true" />
             Generated with Web Crypto
+            <a
+              v-if="mode === 'memorable'"
+              href="https://www.eff.org/dice"
+              target="_blank"
+              rel="noopener noreferrer"
+            >EFF wordlist</a>
           </p>
           <p class="status" :class="statusType" role="status" aria-live="polite">
             {{ statusMessage }}

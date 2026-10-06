@@ -1,3 +1,5 @@
+import { EFF_WORDS } from "./eff-words.js";
+
 const CHARACTER_SETS = {
   lowercase: "abcdefghijklmnopqrstuvwxyz",
   uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -79,6 +81,40 @@ export const generatePassword = (options, cryptoProvider = globalThis.crypto) =>
 export const calculateEntropy = (options) => {
   const poolSize = getCharacterSets(options).join("").length;
   return poolSize ? Math.round(Number(options.length) * Math.log2(poolSize)) : 0;
+};
+
+export const generatePassphrase = (options, cryptoProvider = globalThis.crypto) => {
+  const wordCount = Number(options.wordCount);
+  if (!Number.isInteger(wordCount) || wordCount < 6 || wordCount > 10) {
+    throw new Error("Word count must be between 6 and 10.");
+  }
+
+  if (!["-", ".", "_", " "].includes(options.separator)) {
+    throw new Error("Choose a valid word separator.");
+  }
+
+  if (!cryptoProvider?.getRandomValues) {
+    throw new Error("Secure random generation is not available.");
+  }
+
+  const words = Array.from({ length: wordCount }, () => {
+    const word = EFF_WORDS[secureRandomInt(EFF_WORDS.length, cryptoProvider)];
+    return options.capitalize ? word[0].toUpperCase() + word.slice(1) : word;
+  });
+
+  if (options.includeNumber) {
+    words.push(String(secureRandomInt(10, cryptoProvider)));
+  }
+
+  return words.join(options.separator);
+};
+
+export const calculatePassphraseEntropy = (options) => {
+  const wordCount = Number(options.wordCount);
+  if (!Number.isInteger(wordCount) || wordCount < 6 || wordCount > 10) return 0;
+
+  return Math.round(wordCount * Math.log2(EFF_WORDS.length)
+    + (options.includeNumber ? Math.log2(10) : 0));
 };
 
 export const getStrength = (entropy) => {
